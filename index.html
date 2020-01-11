@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thread Color Matcher</title>
+    <meta name="theme-color" content="#1088D0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <style>
+        body {
+        }
+
+        th.color {
+            width: 120px;
+        }
+        @media (max-width: 767px) {
+            th.color {
+                width: unset;
+            }
+        }
+
+        td.color {
+            padding: 0;
+        }
+        td.color > span {
+            display: block;
+            font-family: 'Consolas', monospace;
+            padding: 4px;
+        }
+
+        th.match {
+            width: 120px;
+        }
+
+        td.match {
+            padding: 0;
+        }
+
+        td.match > span {
+            display: block;
+            font-family: 'Consolas', monospace;
+            height: 35px;
+            padding: 4px;
+        }
+
+        td.blend {
+            background-repeat: repeat, repeat;
+            background-position: 0 0, 3px 3px;
+            transform-origin: 0 0 0;
+            background-origin: padding-box, padding-box;
+            background-clip: border-box, border-box;
+            background-size: 6px 6px, 6px 6px;
+            box-shadow: none;
+            text-shadow: none;
+            transition: none;
+            transform: scale(1);
+        }
+        @media (max-width: 767px) {
+            th.blend {
+                width: 120px;
+            }
+        }
+
+        td.blend > span {
+            display: inline-block;
+        }
+
+        span.debug {
+            font-size: 10px;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script type="text/javascript" src="ciede2000.js"></script>
+<script type="text/javascript" src="color_matcher.js"></script>
+<script type="text/javascript" src="color_data.js"></script>
+
+<script type="text/javascript">
+    let last_clicked;
+    let last_input;
+
+    /**
+     * @returns {array|string}
+     */
+    function getInput() {
+        switch(last_input) {
+            case 'rgb': {
+                return [
+                    document.getElementById('r').value,
+                    document.getElementById('g').value,
+                    document.getElementById('b').value
+                ];
+            }
+            case 'hex': {
+                return document.getElementById('hex').value;
+            }
+            case 'color_code': {
+                return document.getElementById('color_code').value;
+            }
+        }
+    }
+
+    function findRandomColor() {
+        $('#color_code').val('');
+        $('#r').val(Math.floor(Math.random() * 256));
+        $('#g').val(Math.floor(Math.random() * 256));
+        $('#b').val(Math.floor(Math.random() * 256));
+        last_input = 'rgb';
+        $(last_clicked).click();
+    }
+
+    $(document).ready(function (_e) {
+        $('#find').click(function (e) {
+            e.preventDefault();
+            last_clicked = '#find';
+            const sort_formula = Number.parseInt($('select#method').val());
+            colormatcher.find(sort_formula, last_input, getInput());
+        });
+
+        $('#find2').click(function (e) {
+            e.preventDefault();
+            last_clicked = '#find2';
+            const sort_formula = Number.parseInt($('select#method').val());
+            colormatcher.find2(sort_formula, last_input, getInput());
+        });
+
+        $('#r').focus(function () {
+            last_input = 'rgb';
+        });
+        $('#g').focus(function () {
+            last_input = 'rgb';
+        });
+        $('#b').focus(function () {
+            last_input = 'rgb';
+        });
+        $('#hex').focus(function () {
+            last_input = 'hex';
+        });
+        $('#color_code').focus(function () {
+            last_input = 'color_code';
+        });
+
+        $('#random').click(function (e) {
+            e.preventDefault();
+            findRandomColor();
+        });
+
+        window.colormatcher = new ColorMatcher({
+            // debug: true
+        });
+        $('#find').click();
+    });
+</script>
+<div class="container">
+    <div class="row pt-sm-4">
+        <div class="col">
+            <h1>Thread Color Matcher</h1>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col col-12 col-md-4">
+            <form>
+                <div class="form-group row">
+                    <label class="col-12" for="dataset">Color Source</label>
+                    <div class="col-12">
+                        <select class="custom-select custom-select-sm" id="dataset" name="dataset">
+                            <option value="DMC_LORD_LIBIDAN" selected>[DMC] Lord Libidan (Oct 2019)</option>
+                            <option value="DMC_URSA_SOFTWARE">[DMC] Ursa Software (WinStitch / MacStitch)</option>
+                            <option value="DMC_THREADCOLORS_COM">[DMC] Threadcolors.com</option>
+                            <option value="DMC_GIMP_LEARN">[DMC] GIMP LEARN</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="form-group col-4 pr-1">
+                        <label for="r">Red</label>
+                        <input class="form-control" type="number" id="r" name="r" max="255" placeholder="0-255">
+                    </div>
+                    <div class="form-group col-4 px-1">
+                        <label for="g">Green</label>
+                        <input class="form-control" type="number" id="g" name="g" max="255" placeholder="0-255">
+                    </div>
+                    <div class="form-group col-4 pl-1">
+                        <label for="b">Blue</label>
+                        <input class="form-control" type="number" id="b" name="b" max="255" placeholder="0-255">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-6" for="hex">Hex Color Code</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" type="text" id="hex" name="hex" maxlength="7" size="7" value="">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-6" for="color_code">Thread Color Code</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" type="text" id="color_code" name="color_code" maxlength="5" size="5"
+                               placeholder="">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-5" for="method">Sort Matching By</label>
+                    <div class="col-sm-7">
+                        <select class=" custom-select" id="method" name="method">
+                            <option value="0" selected>CIEDE2000 ΔE*</option>
+                            <option value="1">CompuPhase</option>
+                            <option value="2">Perceptive</option>
+                            <option value="3">Euclidean Distance</option>
+                            <option value="4">Lab</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col">
+                        <button class="btn btn-primary btn-block" id="find">
+                            <span>Find Single-Color Matches</span>
+                        </button>
+                        <button class="btn btn-primary btn-block" id="find2">
+                            <span>Find Two-Color Matches</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group row d-none d-sm-none d-md-block d-lg-block d-xl-block">
+                    <div class="col">
+                        <button class="btn btn-info btn-block" id="random">
+                            <span>Random Color!</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col col-12 col-md-8">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead>
+                    <tr class="">
+                        <th class="color">Input</th>
+                        <th class="match">Match</th>
+                        <th>Code</th>
+                        <th>Name</th>
+                    </tr>
+                    </thead>
+                    <tbody id="matches">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
